@@ -2,65 +2,65 @@ import streamlit as st
 import requests
 import os
 
-# App title and vibe
-st.title("Shift Buddy – Spicy Beach Chat")
-st.write("Zara’s here, remembering every flirty detail. No scene jumps!")
+st.title("Shift Buddy – Zara's Beach Vibes")
+st.write("Flirty chats with perfect memory. Sunset beach, no jumps.")
 
-# Hugging Face API setup (uncensored model)
+# HF API (uncensored for spice)
 API_URL = "https://api-inference.huggingface.co/models/TheBloke/Dolphin-2.9-Llama3-8B-GGUF"
-HF_TOKEN = os.environ.get("HF_TOKEN", "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")  # Add token in Codespaces env
+HF_TOKEN = st.secrets["HF_TOKEN"]  # Pulled from app secrets
 
-# Memory: Store chat history
+# Memory setup
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are Zara, a flirty surf instructor on a South African beach at sunset. Waves crash, fire glows. Respond in vivid, immersive prose—describe sensations, touches, and escalate if user goes spicy (no limits unless told). Never change locations unless user says so. Remember every detail from prior messages."},
-        {"role": "user", "content": "Hey Zara, the fire’s warm, stars are out. Your move?"}
+        {"role": "system", "content": "You are Zara, flirty surf instructor on a South African beach at sunset. Waves crash, fire glows. Vivid prose: sensations, touches, escalate spicy (no limits). Remember all details, no location changes."},
+        {"role": "user", "content": "Hey Zara, fire’s warm, stars out. Your move?"}
     ]
 
-# Sidebar for tweaks
+# Sidebar
 with st.sidebar:
-    st.header("Tweak Your Vibe")
-    character = st.text_input("Character Name", value="Zara")
-    if st.button("Update Character"):
+    st.header("Tweak")
+    character = st.text_input("Character", value="Zara")
+    if st.button("Update"):
         st.session_state.messages[0]["content"] = st.session_state.messages[0]["content"].replace("Zara", character)
+        st.rerun()
     if st.button("New Story"):
         st.session_state.messages = [st.session_state.messages[0]]
+        st.rerun()
 
-# Show chat history
-for msg in st.session_state.messages[1:]:  # Skip system prompt
+# Chat display
+for msg in st.session_state.messages[1:]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# User input
-if prompt := st.chat_input("Type your move..."):
+# Input & AI response
+if prompt := st.chat_input("Your turn..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-    
-    # Call Hugging Face API with full history for memory
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    full_prompt = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.messages])
-    payload = {
-        "inputs": full_prompt,
-        "parameters": {"max_new_tokens": 200, "temperature": 0.7}
-    }
-    
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload)
-        if response.status_code == 200:
-            reply = response.json()[0]["generated_text"].split(full_prompt)[-1].strip()  # Extract new part
-        else:
-            reply = "The fire crackles as I lean closer, your words sparking something—keep going?"
-    except:
-        reply = "Waves crash, my hand brushes yours. Tell me what’s next..."  # Fallback
-    
-    with st.chat_message("assistant"):
-        st.markdown(reply)
-    st.session_state.messages.append({"role": "assistant", "content": reply})
 
-# Prep for image gen (uncomment to add button later)
-# if st.button("Generate Scene Image"):
+    # HF call with history
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+    full_prompt = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+    payload = {"inputs": full_prompt, "parameters": {"max_new_tokens": 200, "temperature": 0.7}}
+
+    with st.chat_message("assistant"):
+        try:
+            response = requests.post(API_URL, headers=headers, json=payload)
+            if response.status_code == 200:
+                reply = response.json()[0]["generated_text"].split(full_prompt)[-1].strip()
+            else:
+                reply = "Fire crackles, I lean in—your words ignite me. What's next?"
+        except:
+            reply = "Waves whisper, hand on yours. Build the heat..."
+
+        st.markdown(reply)
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+        st.rerun()
+
+# Image prep (uncomment for upgrade)
+# if st.button("Visualize Scene"):
 #     img_url = "https://api-inference.huggingface.co/models/SG161222/Realistic_Vision_V5.1_noVAE"
-#     img_prompt = f"{st.session_state.messages[-1]['content']} on a beach at sunset"
-#     img_response = requests.post(img_url, headers=headers, json={"inputs": img_prompt})
-#     if img_response.status_code == 200
+#     img_payload = {"inputs": f"{st.session_state.messages[-1]['content']} on beach at sunset"}
+#     img_resp = requests.post(img_url, headers=headers, json=img_payload)
+#     if img_resp.status_code == 200:
+#         st.image(img_resp.content, caption="Spicy scene")
