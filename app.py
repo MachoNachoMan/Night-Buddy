@@ -8,7 +8,7 @@ st.write("Zara’s here, remembering every flirty detail. No scene jumps!")
 
 # Hugging Face API setup (uncensored model)
 API_URL = "https://api-inference.huggingface.co/models/TheBloke/Dolphin-2.9-Llama3-8B-GGUF"
-HF_TOKEN = os.environ.get("HF_TOKEN", "your_hf_token_here")  # Add token in Codespaces env
+HF_TOKEN = os.environ.get("HF_TOKEN", "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")  # Add token in Codespaces env
 
 # Memory: Store chat history
 if "messages" not in st.session_state:
